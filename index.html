@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Markiian's Sklep</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;padding:0;background:#f4f4f9;}
+header{background:linear-gradient(to right,#6366f1,#ec4899,#facc15);color:white;padding:1rem;text-align:center;position:sticky;top:0;}
+header h1{margin:0;font-size:1.5rem;}
+nav{margin-top:0.5rem;}
+nav a,.admin-btn,.cart-btn{color:white;margin:0 5px;text-decoration:none;font-weight:bold;cursor:pointer;}
+nav a:hover{text-decoration:underline;}
+main{max-width:1000px;margin:0 auto;padding:1rem;}
+section{margin-bottom:2rem;}
+.product,.gallery-item{background:white;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.15);padding:1rem;text-align:center;}
+.product img,.gallery-item img{width:100%;height:180px;object-fit:cover;border-radius:10px;cursor:pointer;}
+.btn{background:#4f46e5;color:white;padding:0.5rem 1rem;border:none;border-radius:8px;margin-top:5px;cursor:pointer;}
+.btn:hover{background:#3730a3;}
+.cart-btn{background:#10b981;padding:0.5rem 1rem;border:none;border-radius:8px;}
+.cart-btn:hover{background:#047857;}
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;}
+.category-btn,.sort-btn{margin:2px;padding:5px 10px;border-radius:5px;border:none;cursor:pointer;color:white;}
+.category-btn{background:#6366f1;}
+.category-btn:hover{background:#4338ca;}
+.sort-btn{background:#f59e0b;}
+.sort-btn:hover{background:#b45309;}
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:1000;}
+.modal-content{background:white;padding:20px;border-radius:10px;width:90%;max-width:400px;text-align:center;}
+.close{float:right;cursor:pointer;color:red;font-size:20px;}
+textarea{width:90%;padding:5px;margin:5px 0;}
+@media(max-width:500px){.product img,.gallery-item img{height:120px;}}
+</style>
+</head>
+<body>
+
+<header>
+<h1>Markiian's Sklep</h1>
+<nav>
+<a href="#about">O mnie</a>
+<a href="#products">Produkty</a>
+<a href="#gallery">Galeria</a>
+<button class="admin-btn" onclick="openAdminLogin()">Panel Admina</button>
+<button class="cart-btn" onclick="openCart()">Koszyk 🛒</button>
+<button class="cart-btn" onclick="openEmail()">Twój email</button>
+</nav>
+</header>
+
+<main>
+<section id="about">
+<h2>O mnie</h2>
+<p>Cześć! Jestem Markiian. Tata i mama są ze mnie dumni! Tworzę rękodzieło, które sprawia radość ludziom.</p>
+</section>
+
+<section id="products">
+<h2>Nowości / Polecane</h2>
+<div id="recommendedList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:1rem;"></div>
+
+<h2>Produkty</h2>
+<div id="categoryFilter" style="margin:10px 0;"></div>
+<div style="margin:10px 0;">
+<button class="sort-btn" onclick="sortProducts('asc')">Sortuj po cenie ⬆</button>
+<button class="sort-btn" onclick="sortProducts('desc')">Sortuj po cenie ⬇</button>
+</div>
+<div id="productList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;"></div>
+</section>
+
+<section id="gallery">
+<h2>Galeria</h2>
+<div class="gallery" id="galleryList"></div>
+</section>
+
+<section id="reviews">
+<h2>Opinie klientów</h2>
+<div id="reviewList"></div>
+<textarea id="reviewInput" placeholder="Dodaj opinię"></textarea><br>
+<button class="btn" onclick="addReview()">Dodaj opinię</button>
+</section>
+</main>
+
+<!-- Modale -->
+<div id="paymentModal" class="modal">
+<div class="modal-content">
+<span class="close" onclick="closePayment()">✖</span>
+<h2>Kup teraz 💳</h2>
+<p id="productToPay"></p>
+<form onsubmit="simulatePayment(event)">
+<input type="text" placeholder="Imię i nazwisko" required style="width:90%;margin:5px 0;"><br>
+<input type="number" placeholder="Numer karty" required style="width:90%;margin:5px 0;"><br>
+<input type="text" placeholder="MM/RR" required style="width:90%;margin:5px 0;"><br>
+<input type="number" placeholder="CVV" required style="width:90%;margin:5px 0;"><br>
+<button type="submit" class="btn">Kup teraz</button>
+</form>
+</div>
+</div>
+
+<div id="cartModal" class="modal">
+<div class="modal-content">
+<span class="close" onclick="closeCart()">✖</span>
+<h2>Koszyk 🛒</h2>
+<div id="cartItems"></div>
+<p><strong>Łącznie: <span id="cartTotal">0</span> zł</strong></p>
+<button class="btn" onclick="checkout()">Zapłać</button>
+</div>
+</div>
+
+<div id="emailModal" class="modal">
+<div class="modal-content">
+<span class="close" onclick="closeEmail()">✖</span>
+<h3>Twój email</h3>
+<input type="email" id="userEmail" placeholder="Twój email">
+<button class="btn" onclick="saveEmail()">Zapisz</button>
+<p id="greeting"></p>
+</div>
+</div>
+
+<div id="adminLoginModal" class="modal">
+<div class="modal-content">
+<span class="close" onclick="closeAdminLogin()">✖</span>
+<h3>Panel Admina 🔒</h3>
+<input type="password" id="adminPass" placeholder="Hasło">
+<button class="btn" onclick="checkAdmin()">Zaloguj</button>
+</div>
+</div>
+
+<div id="adminPanel" class="modal">
+<div class="modal-content">
+<span class="close" onclick="closeAdminPanel()">✖</span>
+<h2>Panel Admina</h2>
+<button class="btn" onclick="addProduct()">Dodaj produkt</button>
+<button class="btn" onclick="addGalleryItem()">Dodaj do galerii</button>
+<button class="btn" onclick="addRecommendedItem()">Dodaj do nowości</button>
+</div>
+</div>
+
+<script>
+// --- Dane ---
+let products=[
+{name:'Bransoletka',price:12,image:'https://via.placeholder.com/200',desc:'Kolorowa bransoletka ręcznie robiona',category:'Bransoletki'},
+{name:'Magnes',price:8,image:'https://via.placeholder.com/200',desc:'Magnes na lodówkę',category:'Magnesy'},
+{name:'Zakładka',price:5,image:'https://via.placeholder.com/200',desc:'Piękna zakładka',category:'Zakładki'}
+];
+let recommended=[];
+let gallery=[{image:'https://via.placeholder.com/200'},{image:'https://via.placeholder.com/200'}];
+let cart=[];
+let reviews=[];
+let currentUserEmail='';
+
+// --- Funkcje ---
+function renderProducts(filter=null){
+let list=document.getElementById('productList');list.innerHTML='';
+products.filter(p=>!filter||p.category===filter).forEach((p,i)=>{
+let div=document.createElement('div');div.className='product';
+div.innerHTML=`<img src="${p.image}" onclick="openPayment(${i})"><h3>${p.name}</h3><p>${p.desc}</p><strong>${p.price} zł</strong><br>
+<button class="btn" onclick="addToCart(${i})">Dodaj do koszyka 🛒</button>
+<button class="btn" onclick="openPayment(${i})">Kup teraz</button>`;
+list.appendChild(div);
+});
+renderCategories();
+}
+
+function renderRecommended(){let list=document.getElementById('recommendedList');list.innerHTML='';recommended.forEach((p,i)=>{let div=document.createElement('div');div.className='product';div.innerHTML=<img src="${p.image}" onclick="openPaymentRecommended(${i})"><h3>${p.name}</h3><p>${p.desc}</p><strong>${p.price} zł</strong><br><button class="btn" onclick="addToCartRecommended(${i})">Dodaj do koszyka 🛒</button><button class="btn" onclick="openPaymentRecommended(${i})">Kup teraz</button>;list.appendChild(div);});}
+
+function renderCategories(){let cats=['Wszystkie',...new Set(products.map(p=>p.category))];let div=document.getElementById('categoryFilter');div.innerHTML='';cats.forEach(c=>{let b=document.createElement('button');b.className='category-btn';b.innerText=c;b.onclick=()=>renderProducts(c==='Wszystkie'?null:c);div.appendChild(b);});}
+
+function renderGallery(){let gDiv=document.getElementById('galleryList');gDiv.innerHTML='';gallery.forEach(g=>{let div=document.createElement('div');div.className='gallery-item';div.innerHTML=<img src="${g.image}">;gDiv.appendChild(div);});}
+
+function addReview(){let val=document.getElementById('reviewInput').value;if(val){reviews.push(val);renderReviews();document.getElementById('reviewInput').value='';}}
+function renderReviews(){let rDiv=document.getElementById('reviewList');rDiv.innerHTML='';reviews.forEach(r=>{let p=document.createElement('p');p.innerText=r;rDiv.appendChild(p);});}
+
+// --- Koszyk ---
+function addToCart(i){cart.push(products[i]);updateCart();}
+function addToCartRecommended(i){cart.push(recommended[i]);updateCart();}
+function updateCart(){let div=document.getElementById('cartItems');div.innerHTML='';let total=0;cart.forEach((p,i)=>{total+=p.price;let d=document.createElement('div');d.innerHTML=${p.name} - ${p.price} zł <button class="btn" onclick="removeFromCart(${i})">Usuń</button>;div.appendChild(d);});document.getElementById('cartTotal').innerText=total;}
+function removeFromCart(i){cart.splice(i,1);updateCart();}
+function openCart(){document.getElementById('cartModal').style.display='flex';updateCart();}
+function closeCart(){document.getElementById('cartModal').style.display='none';}
+function checkout(){alert('Płatność zakończona!');cart=[];updateCart();closeCart();}
+
+// --- Kup teraz ---
+function openPayment(i){document.getElementById('paymentModal').style.display='flex';document.getElementById('productToPay').innerText=${products[i].name} - ${products[i].price} zł;}
+function openPaymentRecommended(i){document.getElementById('paymentModal').style.display='flex';document.getElementById('productToPay').innerText=${recommended[i].name} - ${recommended[i].price} zł;}
+function closePayment(){document.getElementById('paymentModal').style.display='none';}
+function simulatePayment(e){e.preventDefault();alert('Płatność zakończona!');closePayment();}
+
+// --- Email ---
+function openEmail(){document.getElementById('emailModal').style.display='flex';}
+function closeEmail(){document.getElementById('emailModal').style.display='none';}
+function saveEmail(){let e=document.getElementById('userEmail').value;if(e.includes('@')){currentUserEmail=e;document.getElementById('greeting').innerText=Witaj, ${currentUserEmail}!;closeEmail();}else{alert('Podaj prawidłowy email');}}
+
+// --- Admin ---
+function openAdminLogin(){document.getElementById('adminLoginModal').style.display='flex';}
+function closeAdminLogin(){document.getElementById('adminLoginModal').style.display='none';}
+function checkAdmin(){let p=document.getElementById('adminPass').value;if(p==='1986'){closeAdminLogin();document.getElementById('adminPanel').style.display='flex';}else{alert('Błędne hasło');}}
+function closeAdminPanel(){document.getElementById('adminPanel').style.display='none';}
+function addProduct(){let n=prompt('Nazwa'),pr=parseFloat(prompt('Cena')),img=prompt('Link do obrazka'),d=prompt('Opis'),c=prompt('Kategoria');if(n&&pr&&img){products.push({name:n,price:pr,image:img,desc:d,category:c});renderProducts();renderCategories();}}
+function addGalleryItem(){let img=prompt('Link do galerii');if(img){gallery.push({image:img});renderGallery();}}
+function addRecommendedItem(){let idx=parseInt(prompt(Podaj indeks produktu (0-${products.length-1})));if(!isNaN(idx)&&products[idx]){recommended.push(products[idx]);renderRecommended();}}
+function sortProducts(o){products.sort((a,b)=>o==='asc'?a.price-b.price:b.price-a.price);renderProducts();}
+
+window.onload=function(){renderProducts();renderGallery();renderRecommended();renderReviews();renderCategories();}
+</script>
+
+<footer style="text-align:center;background:#1f2937;color:white;padding:10px;margin-top:10px;">
+© Markiian — Kraków | Email: markiianhusiak885@gmail.com | Tel: +48883202037
+</footer>
+</body>
+</html>
